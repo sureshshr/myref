@@ -1,0 +1,45 @@
+Build a Java web application with the following features:
+
+Dynamically schedule jobs using cron expressions (e.g., 0/30 * * * * ?)
+
+List all currently scheduled jobs (name, group, next fire time)
+
+Delete specific jobs by name and group
+
+Use Quartz Scheduler with JDBCJobStore for persistence:
+
+Jobs should survive server/application restarts
+
+Use MySQL/PostgreSQL/SQL Server for job storage
+
+Use JAX-RS (Jersey) for exposing REST APIs:
+
+POST /api/jobs → to schedule a job
+
+GET /api/jobs/list → to list all jobs
+
+DELETE /api/jobs/{group}/{name} → to delete a job
+
+Include a simple frontend (HTML + JS) to:
+
+Schedule a job
+
+View all jobs
+
+Delete a job
+
+Include:
+
+quartz.properties file configured for JDBCJobStore
+
+SQL schema for Quartz tables (e.g., tables_mysql_innodb.sql)
+
+Maven pom.xml with required dependencies
+
+ServletContextListener (optional) to manage lifecycle
+
+Optionally allow clustering support (isClustered=true)
+
+Provide example Java classes:
+
+ScheduledJob.java, JobScheduler.java, JobResource.java
