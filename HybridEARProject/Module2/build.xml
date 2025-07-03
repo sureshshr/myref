@@ -1,0 +1,27 @@
+<project name="Module" default="build" basedir=".">
+  <property name="src.dir" value="src" />
+  <property name="web.dir" value="WebContent" />
+  <property name="build.dir" value="build" />
+  <property name="dist.dir" value="dist" />
+
+  <target name="clean">
+    <delete dir="${build.dir}" />
+    <delete dir="${dist.dir}" />
+  </target>
+
+  <target name="prepare">
+    <mkdir dir="${build.dir}" />
+    <mkdir dir="${dist.dir}" />
+  </target>
+
+  <target name="compile" depends="prepare">
+    <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false" />
+  </target>
+
+  <target name="build" depends="compile">
+    <war destfile="${dist.dir}/Module.war" webxml="${web.dir}/WEB-INF/web.xml">
+      <fileset dir="${web.dir}" />
+      <classes dir="${build.dir}" />
+    </war>
+  </target>
+</project>

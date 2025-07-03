@@ -1,0 +1,110 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>MyEarApp</artifactId>
+  <version>1.0.0</version>
+  <packaging>ear</packaging>
+  <name>Hybrid EAR Project</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.microsoft.sqlserver</groupId>
+      <artifactId>mssql-jdbc</artifactId>
+      <version>12.4.1.jre11</version>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>run-ant-builds</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <target name="build-wars">
+                <echo message="Running Ant builds for WAR modules..." />
+                <ant dir="Module1" target="build" />
+                <ant dir="Module2" target="build" />
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-ear-plugin</artifactId>
+        <version>3.0.2</version>
+        <configuration>
+          <defaultLibBundleDir>lib</defaultLibBundleDir>
+          <includeLibs>true</includeLibs>
+          <generateApplicationXml>true</generateApplicationXml>
+          <modules>
+            <webModule>
+              <groupId>com.example</groupId>
+              <artifactId>Module1</artifactId>
+              <bundleFileName>Module1.war</bundleFileName>
+              <contextRoot>/module1</contextRoot>
+            </webModule>
+            <webModule>
+              <groupId>com.example</groupId>
+              <artifactId>Module2</artifactId>
+              <bundleFileName>Module2.war</bundleFileName>
+              <contextRoot>/module2</contextRoot>
+            </webModule>
+          </modules>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>3.1.1</version>
+        <executions>
+          <execution>
+            <id>install-wars</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <file>Module1/dist/Module1.war</file>
+              <groupId>com.example</groupId>
+              <artifactId>Module1</artifactId>
+              <version>1.0.0</version>
+              <packaging>war</packaging>
+              <generatePom>true</generatePom>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install-war2</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <file>Module2/dist/Module2.war</file>
+              <groupId>com.example</groupId>
+              <artifactId>Module2</artifactId>
+              <version>1.0.0</version>
+              <packaging>war</packaging>
+              <generatePom>true</generatePom>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
