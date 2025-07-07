@@ -1,0 +1,13 @@
+<project name="war2" default="war">
+  <property name="build.dir" value="build"/>
+  <property name="war.name" value="war2.war"/>
+  <target name="war">
+    <mkdir dir="${build.dir}"/>
+    <war destfile="${build.dir}/${war.name}" webxml="WebContent/WEB-INF/web.xml">
+      <fileset dir="WebContent">
+        <exclude name="WEB-INF/lib/log4j*.jar"/>
+        <exclude name="WEB-INF/lib/mssql-jdbc*.jar"/>
+      </fileset>
+    </war>
+  </target>
+</project>
