@@ -1,15 +1,25 @@
 /**
  * Simple example demonstrating the singleton ConfigLoader usage.
- * Java 8 compatible.
+ * Java 8 compatible with EAR module support.
  */
 public class ConfigLoaderExample {
 
     public static void main(String[] args) {
-        System.out.println("=== ConfigLoader Singleton Demo ===\n");
+        System.out.println("=== ConfigLoader Singleton Demo (EAR Compatible) ===\n");
 
         try {
             // Get singleton instance
             ConfigLoader config = ConfigLoader.getInstance();
+
+            // Show configuration information for debugging
+            System.out.println(config.getConfigurationInfo());
+            System.out.println();
+
+            // Test resource finding
+            System.out.println("Testing resource availability:");
+            System.out.println("Can find db.properties: " + config.canFindResource("db.properties"));
+            System.out.println("Can find app.properties: " + config.canFindResource("app.properties"));
+            System.out.println();
 
             // Demonstrate that it's the same instance
             ConfigLoader config2 = ConfigLoader.getInstance();
@@ -36,6 +46,10 @@ public class ConfigLoaderExample {
             // Check if properties exist
             System.out.println("Has 'db.url': " + config.containsKey("db.url"));
             System.out.println("Has 'missing.key': " + config.containsKey("missing.key"));
+
+            // Show all loaded properties
+            System.out.println("\nAll loaded properties:");
+            config.getProperties().forEach((key, value) -> System.out.println("  " + key + " = " + value));
 
             // Reload configuration
             System.out.println("\nReloading configuration...");
