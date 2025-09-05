@@ -1,0 +1,25 @@
+// JAAS login config examples for Kerberos using com.sun.security.auth.module.Krb5LoginModule
+
+// 1) Ticket cache based login (use kinit / OS ticket cache)
+KrbLogin {
+    com.sun.security.auth.module.Krb5LoginModule required
+    debug=true
+    useTicketCache=true
+    renewTGT=true
+    doNotPrompt=true
+    useKeyTab=false
+    principal="user@EXAMPLE.COM";
+};
+
+// 2) KeyTab-based login for JavaKerberos (recommended for non-Windows servers / automation)
+//    Use this entry with JDBC URLs that specify authentication=JavaKerberos
+KrbLoginKeytab {
+    com.sun.security.auth.module.Krb5LoginModule required
+    useKeyTab=true
+    keyTab="/path/to/your.keytab"
+    principal="your-principal@EXAMPLE.COM"
+    storeKey=true
+    doNotPrompt=true
+    isInitiator=true
+    debug=true;
+};
