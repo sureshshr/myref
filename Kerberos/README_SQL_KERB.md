@@ -1,266 +1,143 @@
-0. Prerequisites (quick checks)
+# Kerberos Authentication for SQL Server in WebSphere (WAS)
 
-Joined to AD
-Command Prompt →
+This document explains how to configure Kerberos authentication so a WebSphere Application Server (WAS) DataSource connects to Microsoft SQL Server using Kerberos (no DB password stored). Place this file in the project directory to download or open from your IDE.
 
-systeminfo | findstr /B /C:"Domain"
+## Defaults used in examples
 
-Should show Domain: YOUR.DOMAIN.
+- AD realm: CORP.EXAMPLE.COM
+- SQL host: dbhost.corp.example.com:1433
+- SQL service account: SQLsvc@CORP.EXAMPLE.COM
+- Keytab on WAS: /opt/IBM/WebSphere/keytabs/sqlsvc.keytab
+- JAAS alias (WAS): KerberosUser
+- JNDI DataSource: jdbc/YourDb
+- WAS server OS: Linux (adjust for AIX/Windows)
 
-Time is in sync with the domain controller (Kerberos is picky: ≤5 min skew).
+## Quick checklist
 
-DNS resolves your DC (e.g., dc01.corp.example.com).
+1. Register SPN for SQL service account and create keytab.
+2. Copy keytab to WAS and set secure permissions.
+3. Create krb5.conf on WAS.
+4. Create jaas.conf and/or JAAS System Login in WAS.
+5. Add JVM properties in WAS pointing to jaas.conf and realm/KDC.
+6. Create J2C auth alias (optional) and configure DataSource custom properties.
+7. Restart WAS and test.
 
-Java installed
+## 1) AD / SQL Server — SPN & keytab (example AD admin commands)
 
-java -version
-javac -version
+On AD admin host (Windows):
 
-(Use JDK 8+)
+- Register SPN:
+  setspn -A MSSQLSvc/dbhost.corp.example.com:1433 SQLsvc
+- Create keytab (example, adjust crypto per domain policy):
+  ktpass -princ MSSQLSvc/dbhost.corp.example.com@CORP.EXAMPLE.COM -mapuser SQLsvc -pass TemporaryPassword! -out sqlsvc.keytab -ptype KRB5_NT_PRINCIPAL -crypto AES256-SHA1
+- Securely copy sqlsvc.keytab to WAS: /opt/IBM/WebSphere/keytabs/sqlsvc.keytab
 
-1. Create/confirm Kerberos config
-   Option 1 (default path)
+Verify:
 
-Create C:\Windows\krb5.ini with your details:
+- setspn -L SQLsvc
 
+## 2) krb5.conf (place in /etc/krb5.conf or OS-specific location)
+
+Example:
+
+```
 [libdefaults]
-default_realm = CORP.EXAMPLE.COM
-dns_lookup_kdc = true
-dns_lookup_realm = true
-ticket_lifetime = 24h
-forwardable = true
+  default_realm = CORP.EXAMPLE.COM
+  dns_lookup_kdc = false
 
 [realms]
-CORP.EXAMPLE.COM = {
-kdc = dc01.corp.example.com
-admin_server = dc01.corp.example.com
-}
+  CORP.EXAMPLE.COM = {
+    kdc = kdc.corp.example.com
+  }
 
 [domain_realm]
-.corp.example.com = CORP.EXAMPLE.COM
-corp.example.com = CORP.EXAMPLE.COM
+  .corp.example.com = CORP.EXAMPLE.COM
+  corp.example.com = CORP.EXAMPLE.COM
+```
 
-Option 2 (custom path)
+## 3) jaas.conf (example path: /opt/IBM/WebSphere/jaas.conf)
 
-Put krb5.ini anywhere (e.g., C:\dev\kerberos\krb5.ini) and pass:
+Example entry:
 
--Djava.security.krb5.conf=C:\dev\kerberos\krb5.ini
-
-2. Choose how you’ll authenticate
-   A) Using a keytab (service principal)
-
-You have a file like C:\dev\kerberos\was.keytab and a principal such as
-HTTP/waswin01.corp.example.com@CORP.EXAMPLE.COM.
-
-B) Using your AD user ticket (no keytab)
-
-Make sure you have a ticket (either from domain logon or run kinit from MIT Kerberos for Windows):
-
-klist
-
-You should see a TGT (ticket-granting ticket).
-If not, install MIT Kerberos for Windows and run:
-
-kinit YOURUSER@CORP.EXAMPLE.COM
-
-3. Create a JAAS file
-
-Create C:\dev\kerberos\jaas.conf with both entries and use the one you need:
-
-// === A) Keytab-based login ===
-KerberosKeytab {
-com.sun.security.auth.module.Krb5LoginModule required
-useKeyTab=true
-keyTab="C:/dev/kerberos/was.keytab"
-principal="HTTP/waswin01.corp.example.com@CORP.EXAMPLE.COM"
-storeKey=true
-doNotPrompt=true
-isInitiator=true
-debug=true;
-};
-
-// === B) User-ticket (no keytab) ===
+```
 KerberosUser {
-com.sun.security.auth.module.Krb5LoginModule required
-useTicketCache=true
-renewTGT=false
-doNotPrompt=true
-isInitiator=true
-debug=true;
-}
+  com.ibm.security.auth.module.Krb5LoginModule required
+    useKeytab=true
+    keyTab="/opt/IBM/WebSphere/keytabs/sqlsvc.keytab"
+    principal="SQLsvc@CORP.EXAMPLE.COM"
+    storeKey=true
+    doNotPrompt=true
+    debug=true;
+};
+```
 
-Adjust paths, hostnames, and realm names.
+## 4) WAS Admin Console settings (high level)
 
-4. Write the minimal Java test
+- Security → Global security → Authentication mechanisms → Kerberos authentication
+  - Enable Kerberos, set realm and KDC.
+- Security → Global security → Authentication → JAAS - System logins
+  - Create alias `KerberosUser` with module `com.ibm.security.auth.module.Krb5LoginModule` and properties matching jaas.conf.
+- Security → Global security → Authentication → J2C authentication data
+  - Create alias `SqlServerKerberosAlias` (User ID: SQLsvc@CORP.EXAMPLE.COM).
+- Servers → Server Types → WebSphere application servers → server1 → Process definition → Java Virtual Machine → Custom properties
+  - java.security.krb5.realm = CORP.EXAMPLE.COM
+  - java.security.krb5.kdc = kdc.corp.example.com
+  - java.security.auth.login.config = /opt/IBM/WebSphere/jaas.conf
+  - (optional) sun.security.krb5.debug = true
+- Resources → JDBC → Data sources → [YourDataSource]
+  - JNDI name: jdbc/YourDb
+  - Data store helper class: com.ibm.websphere.rsadapter.MicrosoftSQLServerDataStoreHelper
+  - Security: Component-managed/Container-managed → Authentication alias: SqlServerKerberosAlias
+  - Custom properties: serverName=dbhost.corp.example.com, portNumber=1433, databaseName=YourDb, integratedSecurity=true, authenticationScheme=JavaKerberos
 
-Create C:\dev\kerberos\KerberosTest.java:
+Save, restart the server if needed.
 
-import javax.security.auth.Subject;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
-import java.security.PrivilegedAction;
+## 5) File permissions
 
-// Optional GSS to fetch a service ticket and prove end-to-end
-import org.ietf.jgss.\*;
+- chown to WAS OS user and chmod 600 the keytab:
+  sudo chown wasuser:wasgroup /opt/IBM/WebSphere/keytabs/sqlsvc.keytab
+  sudo chmod 600 /opt/IBM/WebSphere/keytabs/sqlsvc.keytab
 
-public class KerberosTest {
-public static void main(String[] args) {
-// Profile name from jaas.conf: KerberosKeytab OR KerberosUser
-String profile = (args.length > 0) ? args[0] : "KerberosUser";
+## 6) Test & debug
 
-        // Optional target SPN to request a service ticket for (e.g., HTTP or MSSQLSvc)
-        String targetSpn = (args.length > 1) ? args[1] : null;
+On WAS host:
 
-        try {
-            LoginContext lc = new LoginContext(profile);
-            lc.login();
-            System.out.println("✅ JAAS login successful with profile: " + profile);
+- kinit -k -t /opt/IBM/WebSphere/keytabs/sqlsvc.keytab SQLsvc@CORP.EXAMPLE.COM
+- klist
+  Check WAS logs: SystemOut.log and SystemErr.log for Kerberos messages.
 
-            Subject subject = lc.getSubject();
-            System.out.println("Subject: " + subject);
+## 7) Java sample (use container DataSource)
 
-            if (targetSpn != null) {
-                // Request a service ticket via GSS-API (no need to contact the actual service)
-                Subject.doAs(subject, (PrivilegedAction<Void>) () -> {
-                    try {
-                        GSSManager mgr = GSSManager.getInstance();
-                        GSSName serverName = mgr.createName(targetSpn, GSSName.NT_HOSTBASED_SERVICE);
-                        Oid krb5Oid = new Oid("1.2.840.113554.1.2.2"); // Kerberos V5
+Place or update your app to use JNDI DataSource:
 
-                        GSSContext ctx = mgr.createContext(
-                                serverName,
-                                krb5Oid,
-                                null,
-                                GSSContext.DEFAULT_LIFETIME
-                        );
-                        ctx.requestMutualAuth(true);
-                        ctx.requestConf(true);
-                        ctx.requestInteg(true);
-
-                        byte[] token = new byte[0];
-                        token = ctx.initSecContext(token, 0, token.length);
-                        System.out.println("🎟  Acquired service ticket for: " + targetSpn +
-                                " (token length: " + (token == null ? 0 : token.length) + ")");
-
-                        ctx.dispose();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                });
-            } else {
-                System.out.println("No target SPN provided; JAAS login only.");
-            }
-
-        } catch (LoginException e) {
-            System.err.println("❌ Kerberos authentication failed: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-}
-
-5. Compile
-
-In Command Prompt at C:\dev\kerberos:
-
-javac KerberosTest.java
-
-If you get missing GSS classes (rare on modern JDKs), ensure you’re using a standard Oracle/OpenJDK JDK (not a JRE-only install).
-
-6. Run
-   A) Using keytab
-   java ^
-   -Djava.security.auth.login.config=C:\dev\kerberos\jaas.conf ^
-   -Djava.security.krb5.conf=C:\dev\kerberos\krb5.ini ^
-   -Djavax.security.auth.useSubjectCredsOnly=false ^
-   -Dsun.security.krb5.debug=true ^
-   KerberosTest KerberosKeytab HTTP/waswin01.corp.example.com@CORP.EXAMPLE.COM
-
-B) Using your user ticket (no keytab)
-
-(Ensure klist shows a valid TGT)
-
-java ^
--Djava.security.auth.login.config=C:\dev\kerberos\jaas.conf ^
--Djava.security.krb5.conf=C:\dev\kerberos\krb5.ini ^
--Djavax.security.auth.useSubjectCredsOnly=false ^
--Dsun.security.krb5.debug=true ^
-KerberosTest KerberosUser HTTP/waswin01.corp.example.com@CORP.EXAMPLE.COM
-
-What you should see
-
-✅ JAAS login successful …
-
-If you passed a target SPN, a line like
-🎟 Acquired service ticket for: HTTP/… (token length: …)
-which proves you got a service ticket from the KDC.
-
-You can also target other services, e.g. SQL Server:
-MSSQLSvc/dbhost.corp.example.com:1433@CORP.EXAMPLE.COM
-
-7. (Optional) Real JDBC test to SQL Server with Kerberos
-
-If you want to go one step further and actually connect:
-
-Download the Microsoft JDBC Driver for SQL Server and put its JAR on your classpath.
-
-Create SqlKerbTest.java:
-
-import javax.security.auth.login.LoginContext;
+```
+import javax.naming.InitialContext;
+import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
 public class SqlKerbTest {
-public static void main(String[] args) throws Exception {
-String jaasProfile = (args.length > 0) ? args[0] : "KerberosUser";
-String url = "jdbc:sqlserver://dbhost.corp.example.com:1433;" + "databaseName=YourDb;" + "integratedSecurity=true;" + "authenticationScheme=JavaKerberos";
-
-        LoginContext lc = new LoginContext(jaasProfile);
-        lc.login();
-        System.out.println("✅ JAAS login successful for JDBC");
-
-        try (Connection conn = DriverManager.getConnection(url);
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery("SELECT SYSTEM_USER, SUSER_SNAME()")) {
-            while (rs.next()) {
-                System.out.println("Connected as: " + rs.getString(1) + " / " + rs.getString(2));
-            }
-        }
+  public static void main(String[] args) throws Exception {
+    InitialContext ctx = new InitialContext();
+    DataSource ds = (DataSource) ctx.lookup("jdbc/YourDb");
+    try (Connection conn = ds.getConnection();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery("SELECT SYSTEM_USER, SUSER_SNAME()")) {
+      while (rs.next()) {
+        System.out.println("Connected as: " + rs.getString(1) + " / " + rs.getString(2));
+      }
     }
-
+  }
 }
+```
 
-Run (adjust paths and add the JDBC jar to classpath):
+## 8) Common issues
 
-javac -cp .;mssql-jdbc-\*.jar SqlKerbTest.java
+- SPN mismatch or missing SPN
+- Keytab principal differs from SPN
+- DNS forward/reverse mismatch
+- Clock skew (>5 minutes)
+- Wrong JAAS alias or missing java.security.auth.login.config
 
-java ^
--cp .;mssql-jdbc-\*.jar ^
--Djava.security.auth.login.config=C:\dev\kerberos\jaas.conf ^
--Djava.security.krb5.conf=C:\dev\kerberos\krb5.ini ^
--Djavax.security.auth.useSubjectCredsOnly=false ^
--Dsun.security.krb5.debug=true ^
-SqlKerbTest KerberosUser
-
-8. Troubleshooting cheatsheet
-
-KDC has no support for encryption type
-Keytab/realm uses ciphers your KDC doesn’t allow → regenerate keytab (AES256 or AES128), enable matching enctypes in AD.
-
-Clock skew too great
-Sync Windows time with the DC.
-
-Pre-authentication failed / Integrity check failed
-Wrong password in keytab or wrong principal → regenerate keytab or fix principal.
-
-Cannot find default realm / Cannot locate KDC
-Bad krb5.ini or DNS. Verify dc01 resolves and is reachable on UDP/TCP 88.
-
-No valid credentials provided (Mechanism level: Failed to find any Kerberos tgt)
-Using KerberosUser without a TGT. Run kinit or ensure you’re logged into the domain and klist shows a TGT.
-
-Still failing? Turn on debug
-You already have -Dsun.security.krb5.debug=true. Read the trace—look for the realm, KDC, and chosen enctypes.
+If you want, confirm values (realm, SQL host, service account, keytab path, JAAS alias, JNDI name, WAS OS/user) and I will generate exact ktpass/setspn commands, krb5.conf, jaas.conf, WAS JVM properties and a ready-to-save
