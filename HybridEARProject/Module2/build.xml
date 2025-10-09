@@ -15,7 +15,13 @@
   </target>
 
   <target name="compile" depends="prepare">
-    <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false" />
+    <!-- Compile with Java 1.8 compatibility and include jars from lib if present -->
+    <path id="module.classpath">
+      <fileset dir="lib" includes="**/*.jar"/>
+    </path>
+    <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false" source="1.8" target="1.8">
+      <classpath refid="module.classpath" />
+    </javac>
   </target>
 
   <target name="build" depends="compile">

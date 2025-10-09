@@ -19,17 +19,24 @@
     <!-- Added dependencies for the WAR artifacts produced by Module1 and Module2
          so the ear plugin can reference them. These are installed into the
          local repo during the build by the maven-install-plugin. -->
+    <!-- Use system-scoped dependencies for the Ant-built WAR files so Maven
+         doesn't try to resolve them from remote repositories. These files
+         are produced by the Ant builds into Module*/dist/Module.war. -->
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>Module1</artifactId>
       <version>1.0.0</version>
       <type>war</type>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/Module1/dist/Module.war</systemPath>
     </dependency>
     <dependency>
       <groupId>com.example</groupId>
       <artifactId>Module2</artifactId>
       <version>1.0.0</version>
       <type>war</type>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/Module2/dist/Module.war</systemPath>
     </dependency>
   </dependencies>
 
@@ -80,6 +87,27 @@
                   <destFileName>mssql-jdbc.jar</destFileName>
                   <outputDirectory>${project.basedir}/Module1/lib</outputDirectory>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>javax.servlet</groupId>
+                  <artifactId>jstl</artifactId>
+                  <version>1.2</version>
+                  <destFileName>jstl-1.2.jar</destFileName>
+                  <outputDirectory>${project.basedir}/Module1/lib</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>javax.servlet</groupId>
+                  <artifactId>javax.servlet-api</artifactId>
+                  <version>3.1.0</version>
+                  <destFileName>servlet-api-3.1.0.jar</destFileName>
+                  <outputDirectory>${project.basedir}/Module1/lib</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-dbutils</groupId>
+                  <artifactId>commons-dbutils</artifactId>
+                  <version>1.7</version>
+                  <destFileName>commons-dbutils-1.7.jar</destFileName>
+                  <outputDirectory>${project.basedir}/Module1/lib</outputDirectory>
+                </artifactItem>
               </artifactItems>
             </configuration>
           </execution>
@@ -96,6 +124,27 @@
                   <artifactId>mssql-jdbc</artifactId>
                   <version>12.4.1.jre11</version>
                   <destFileName>mssql-jdbc.jar</destFileName>
+                  <outputDirectory>${project.basedir}/Module2/lib</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>javax.servlet</groupId>
+                  <artifactId>jstl</artifactId>
+                  <version>1.2</version>
+                  <destFileName>jstl-1.2.jar</destFileName>
+                  <outputDirectory>${project.basedir}/Module2/lib</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>javax.servlet</groupId>
+                  <artifactId>javax.servlet-api</artifactId>
+                  <version>3.1.0</version>
+                  <destFileName>servlet-api-3.1.0.jar</destFileName>
+                  <outputDirectory>${project.basedir}/Module2/lib</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-dbutils</groupId>
+                  <artifactId>commons-dbutils</artifactId>
+                  <version>1.7</version>
+                  <destFileName>commons-dbutils-1.7.jar</destFileName>
                   <outputDirectory>${project.basedir}/Module2/lib</outputDirectory>
                 </artifactItem>
               </artifactItems>
