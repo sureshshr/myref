@@ -1,1 +1,22 @@
-<web-app></web-app>
+<web-app>
+    <servlet>
+        <servlet-name>EmployeeServlet</servlet-name>
+        <servlet-class>com.example.module1.EmployeeServlet</servlet-class>
+        <init-param>
+            <param-name>db.url</param-name>
+            <param-value>jdbc:sqlserver://localhost:1433;databaseName=EmployeeDB</param-value>
+        </init-param>
+        <init-param>
+            <param-name>db.user</param-name>
+            <param-value>sa</param-value>
+        </init-param>
+        <init-param>
+            <param-name>db.password</param-name>
+            <param-value>yourStrong(!)Password</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EmployeeServlet</servlet-name>
+        <url-pattern>/employees</url-pattern>
+    </servlet-mapping>
+</web-app>

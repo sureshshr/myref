@@ -1,6 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -16,6 +15,21 @@
       <artifactId>mssql-jdbc</artifactId>
       <version>12.4.1.jre11</version>
       <scope>runtime</scope>
+    </dependency>
+    <!-- Added dependencies for the WAR artifacts produced by Module1 and Module2
+         so the ear plugin can reference them. These are installed into the
+         local repo during the build by the maven-install-plugin. -->
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>Module1</artifactId>
+      <version>1.0.0</version>
+      <type>war</type>
+    </dependency>
+    <dependency>
+      <groupId>com.example</groupId>
+      <artifactId>Module2</artifactId>
+      <version>1.0.0</version>
+      <type>war</type>
     </dependency>
   </dependencies>
 
@@ -39,6 +53,53 @@
             <goals>
               <goal>run</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Copy required third-party jars (e.g. MS SQL JDBC driver) into module lib folders
+           before Ant runs so Ant's javac classpath can find them. Bound to initialize
+           which runs before generate-sources (where the antrun plugin is bound). -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>copy-jdbc-to-module1</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.microsoft.sqlserver</groupId>
+                  <artifactId>mssql-jdbc</artifactId>
+                  <version>12.4.1.jre11</version>
+                  <destFileName>mssql-jdbc.jar</destFileName>
+                  <outputDirectory>${project.basedir}/Module1/lib</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-jdbc-to-module2</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.microsoft.sqlserver</groupId>
+                  <artifactId>mssql-jdbc</artifactId>
+                  <version>12.4.1.jre11</version>
+                  <destFileName>mssql-jdbc.jar</destFileName>
+                  <outputDirectory>${project.basedir}/Module2/lib</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -73,14 +134,19 @@
         <artifactId>maven-install-plugin</artifactId>
         <version>3.1.1</version>
         <executions>
+          <!-- Install the generated WARs earlier so the ear plugin can resolve them -->
           <execution>
             <id>install-wars</id>
-            <phase>prepare-package</phase>
+            <!-- Run during generate-resources so the artifacts are installed after
+        the antrun step (which is bound to generate-sources) and before
+        the ear plugin generates application.xml. -->
+            <phase>generate-resources</phase>
             <goals>
               <goal>install-file</goal>
             </goals>
             <configuration>
-              <file>Module1/dist/Module1.war</file>
+              <!-- Ant produces Module.war inside each module's dist directory -->
+              <file>Module1/dist/Module.war</file>
               <groupId>com.example</groupId>
               <artifactId>Module1</artifactId>
               <version>1.0.0</version>
@@ -90,12 +156,12 @@
           </execution>
           <execution>
             <id>install-war2</id>
-            <phase>prepare-package</phase>
+            <phase>generate-resources</phase>
             <goals>
               <goal>install-file</goal>
             </goals>
             <configuration>
-              <file>Module2/dist/Module2.war</file>
+              <file>Module2/dist/Module.war</file>
               <groupId>com.example</groupId>
               <artifactId>Module2</artifactId>
               <version>1.0.0</version>

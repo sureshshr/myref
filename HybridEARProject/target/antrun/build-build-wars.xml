@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="build-wars">
+  <target name="build-wars">
+    <echo message="Running Ant builds for WAR modules..." />
+    <ant dir="Module1" target="build" />
+    <ant dir="Module2" target="build" />
+  </target>
+</project>
