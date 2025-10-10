@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="ivy-project" default="ear" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+    
+    <property name="dist.dir" value="dist"/>
+    <property name="ear.dir" value="ear"/>
+    <property name="lib.dir" value="lib"/>
+    
+    <!-- Target to clean all modules -->
+    <target name="clean-all" description="Clean all modules">
+        <ant dir="module1" target="clean"/>
+        <ant dir="module2" target="clean"/>
+        <delete dir="${dist.dir}"/>
+        <delete dir="${lib.dir}"/>
+    </target>
+    
+    <!-- Target to build all modules -->
+    <target name="build-all" description="Build all modules">
+        <ant dir="module1" target="jar"/>
+        <ant dir="module2" target="jar"/>
+    </target>
+    
+    <!-- Target to resolve shared dependencies -->
+    <target name="resolve-shared" description="Resolve shared dependencies">
+        <ivy:settings file="ivysettings.xml"/>
+        <mkdir dir="${lib.dir}"/>
+        <!-- Copy dependencies from modules -->
+        <copy todir="${lib.dir}">
+            <fileset dir="module1/lib">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+        <copy todir="${lib.dir}">
+            <fileset dir="module2/lib">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+    </target>
+    
+    <!-- Target to create EAR file -->
+    <target name="ear" depends="build-all, resolve-shared" description="Create EAR file">
+        <mkdir dir="${ear.dir}/build"/>
+        
+        <!-- Copy module JARs -->
+        <copy todir="${ear.dir}/build">
+            <fileset dir="${dist.dir}">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+        
+        <!-- Copy shared libraries -->
+        <mkdir dir="${ear.dir}/build/lib"/>
+        <copy todir="${ear.dir}/build/lib">
+            <fileset dir="${lib.dir}">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+        
+        <!-- Copy application.xml -->
+        <copy file="${ear.dir}/src/main/application/application.xml" 
+              todir="${ear.dir}/build/META-INF"/>
+        
+        <!-- Create EAR file -->
+        <jar destfile="${dist.dir}/company-application.ear" basedir="${ear.dir}/build">
+            <manifest>
+                <attribute name="Implementation-Version" value="1.0"/>
+                <attribute name="Created-By" value="Apache Ant"/>
+            </manifest>
+        </jar>
+        
+        <echo message="EAR file created: ${dist.dir}/company-application.ear"/>
+    </target>
+    
+    <!-- Target to run the complete build -->
+    <target name="all" depends="clean-all, ear" description="Complete build process"/>
+    
+</project>

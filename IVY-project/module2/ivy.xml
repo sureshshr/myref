@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0">
+    <info organisation="com.company" module="vendor-module" revision="1.0"/>
+    
+    <configurations>
+        <conf name="compile" visibility="public" description="Required to compile the application"/>
+        <conf name="runtime" visibility="public" description="Additional run-time dependencies" extends="compile"/>
+        <conf name="test" visibility="private" description="Required for test only" extends="runtime"/>
+    </configurations>
+    
+    <dependencies>
+        <!-- PostgreSQL JDBC Driver -->
+        <dependency org="org.postgresql" name="postgresql" rev="42.5.4" conf="compile->compile(*),master(*)"/>
+        
+        <!-- Connection Pooling -->
+        <dependency org="com.zaxxer" name="HikariCP" rev="5.0.1" conf="compile->compile(*),master(*)"/>
+        
+        <!-- Logging -->
+        <dependency org="org.slf4j" name="slf4j-api" rev="1.7.36" conf="compile->compile(*),master(*)"/>
+        <dependency org="ch.qos.logback" name="logback-classic" rev="1.2.12" conf="runtime->runtime(*),master(*)"/>
+        
+        <!-- JUnit for testing -->
+        <dependency org="junit" name="junit" rev="4.13.2" conf="test->runtime(*),master(*)"/>
+    </dependencies>
+</ivy-module>

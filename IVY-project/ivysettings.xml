@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivysettings>
+    <settings defaultResolver="default"/>
+    <include url="${ivy.default.settings.dir}/ivysettings-public.xml"/>
+    <resolvers>
+        <ibiblio name="central" m2compatible="true"/>
+        <ibiblio name="maven2" root="https://repo1.maven.org/maven2/" 
+                 pattern="[organisation]/[module]/[revision]/[artifact]-[revision].[ext]" 
+                 m2compatible="true"/>
+    </resolvers>
+    <modules>
+        <module organisation="*" name="*" resolver="central"/>
+    </modules>
+</ivysettings>
