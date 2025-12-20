@@ -40,4 +40,6 @@ echo "  CATALINA_BASE=$CATALINA_BASE" >&2
 echo "  URL: http://localhost:$HTTP_PORT/tomcat-spa-sample/app/" >&2
 echo "  Logs: $CATALINA_BASE/logs/catalina.out" >&2
 echo "To stop:" >&2
+echo "  $ROOT_DIR/tools/stop-tomcat9-isolated.sh" >&2
+echo "  (or)" >&2
 echo "  CATALINA_HOME=\"$CATALINA_HOME\" CATALINA_BASE=\"$CATALINA_BASE\" \"$CATALINA_HOME/bin/catalina.sh\" stop" >&2

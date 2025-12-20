@@ -1,5 +1,6 @@
 # Maven
 /target/
+/.tools/
 
 # Node / Angular
 /angular-employee-crud/node_modules/

@@ -93,8 +93,8 @@ export class EmployeeService {
     const seed: Employee[] = [
       {
         id: newId(),
-        name: 'Asha Kumar',
-        email: 'asha.kumar@example.com',
+        name: 'Employee 1',
+        email: 'employee1@example.invalid',
         department: 'Engineering',
         salary: 95000,
         active: true,
@@ -103,8 +103,8 @@ export class EmployeeService {
       },
       {
         id: newId(),
-        name: 'test tes',
-        email: 'test.tess@example.com',
+        name: 'Employee 2',
+        email: 'employee2@example.invalid',
         department: 'Operations',
         salary: 78000,
         active: true,
@@ -113,8 +113,8 @@ export class EmployeeService {
       },
       {
         id: newId(),
-        name: 'Meera Iyer',
-        email: 'meera.iyer@example.com',
+        name: 'Employee 3',
+        email: 'employee3@example.invalid',
         department: 'Finance',
         salary: 88000,
         active: false,
