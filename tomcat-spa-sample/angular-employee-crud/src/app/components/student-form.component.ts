@@ -3,8 +3,8 @@ import { Component, OnInit, computed, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { Department, Employee, departments } from '../models/employee';
-import { EmployeeService } from '../services/employee.service';
+import { Student, StudentCreate } from '../models/student';
+import { StudentService } from '../services/student.service';
 
 @Component({
   standalone: true,
@@ -18,7 +18,7 @@ import { EmployeeService } from '../services/employee.service';
           <div>
             <label>
               Name
-              <input formControlName="name" placeholder="Employee name" />
+              <input formControlName="name" placeholder="Student name" />
             </label>
             <div class="error" *ngIf="form.controls.name.touched && form.controls.name.invalid">
               Name is required (min 2 characters).
@@ -28,7 +28,7 @@ import { EmployeeService } from '../services/employee.service';
           <div>
             <label>
               Email
-              <input formControlName="email" placeholder="name&#64;company.com" />
+              <input formControlName="email" placeholder="student&#64;example.invalid" />
             </label>
             <div class="error" *ngIf="form.controls.email.touched && form.controls.email.invalid">
               Valid email is required.
@@ -37,20 +37,21 @@ import { EmployeeService } from '../services/employee.service';
 
           <div>
             <label>
-              Department
-              <select formControlName="department">
-                <option *ngFor="let d of departmentOptions" [value]="d">{{ d }}</option>
-              </select>
+              Major
+              <input formControlName="major" placeholder="Major" />
             </label>
+            <div class="error" *ngIf="form.controls.major.touched && form.controls.major.invalid">
+              Major is required.
+            </div>
           </div>
 
           <div>
             <label>
-              Salary
-              <input type="number" formControlName="salary" />
+              Year
+              <input type="number" formControlName="year" min="1" max="10" />
             </label>
-            <div class="error" *ngIf="form.controls.salary.touched && form.controls.salary.invalid">
-              Salary must be 0 or higher.
+            <div class="error" *ngIf="form.controls.year.touched && form.controls.year.invalid">
+              Year must be 1 or higher.
             </div>
           </div>
 
@@ -67,7 +68,7 @@ import { EmployeeService } from '../services/employee.service';
 
         <div style="margin-top: 14px; display:flex; gap:10px;">
           <button type="submit" [disabled]="form.invalid">Save</button>
-          <a routerLink="/employees">Cancel</a>
+          <a routerLink="/students">Cancel</a>
         </div>
 
         <div class="error" *ngIf="errorMessage()" style="margin-top: 10px;">
@@ -77,18 +78,16 @@ import { EmployeeService } from '../services/employee.service';
     </div>
   `
 })
-export class EmployeeFormComponent implements OnInit {
+export class StudentFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
-  private readonly employeeService = inject(EmployeeService);
-
-  readonly departmentOptions = departments;
+  private readonly studentService = inject(StudentService);
 
   private readonly id = computed(() => this.route.snapshot.paramMap.get('id'));
   readonly isEdit = computed(() => !!this.id());
 
-  readonly title = computed(() => (this.isEdit() ? 'Edit Employee' : 'New Employee'));
+  readonly title = computed(() => (this.isEdit() ? 'Edit Student' : 'New Student'));
   private _errorMessage = '';
 
   errorMessage(): string {
@@ -98,8 +97,8 @@ export class EmployeeFormComponent implements OnInit {
   readonly form = this.fb.nonNullable.group({
     name: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
     email: this.fb.nonNullable.control('', [Validators.required, Validators.email]),
-    department: this.fb.nonNullable.control<Department>('Engineering'),
-    salary: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+    major: this.fb.nonNullable.control('', [Validators.required]),
+    year: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
     active: this.fb.nonNullable.control(true)
   });
 
@@ -110,22 +109,22 @@ export class EmployeeFormComponent implements OnInit {
     if (!id) return;
 
     try {
-      await this.employeeService.refresh();
-      const existing = this.employeeService.getById(id);
+      await this.studentService.refresh();
+      const existing = this.studentService.getById(id);
       if (!existing) {
-        this._errorMessage = 'Employee not found.';
+        this._errorMessage = 'Student not found.';
         return;
       }
 
       this.form.patchValue({
         name: existing.name,
         email: existing.email,
-        department: existing.department,
-        salary: existing.salary,
+        major: existing.major,
+        year: existing.year,
         active: existing.active
       });
     } catch (e) {
-      this._errorMessage = e instanceof Error ? e.message : 'Failed to load employee';
+      this._errorMessage = e instanceof Error ? e.message : 'Failed to load student';
     }
   }
 
@@ -142,33 +141,34 @@ export class EmployeeFormComponent implements OnInit {
 
     try {
       if (!id) {
-        await this.employeeService.create({
+        const input: StudentCreate = {
           name: value.name,
           email: value.email,
-          department: value.department,
-          salary: Number(value.salary),
+          major: value.major,
+          year: Number(value.year),
           active: value.active
-        });
+        };
+        await this.studentService.create(input);
       } else {
-        const existing = this.employeeService.getById(id);
+        const existing = this.studentService.getById(id);
         if (!existing) {
-          this._errorMessage = 'Employee not found.';
+          this._errorMessage = 'Student not found.';
           return;
         }
 
-        const updated: Omit<Employee, 'createdAtIso' | 'updatedAtIso'> = {
+        const updated: Omit<Student, 'createdAtIso' | 'updatedAtIso'> = {
           ...existing,
           name: value.name,
           email: value.email,
-          department: value.department,
-          salary: Number(value.salary),
+          major: value.major,
+          year: Number(value.year),
           active: value.active
         };
 
-        await this.employeeService.update(updated);
+        await this.studentService.update(updated);
       }
 
-      this.router.navigate(['/employees']);
+      this.router.navigate(['/students']);
     } catch (e) {
       this._errorMessage = e instanceof Error ? e.message : 'Save failed';
     }

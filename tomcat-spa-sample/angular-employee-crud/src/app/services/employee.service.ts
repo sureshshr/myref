@@ -1,39 +1,23 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { Department, Employee } from '../models/employee';
 
 type EmployeeCreate = Omit<Employee, 'id' | 'createdAtIso' | 'updatedAtIso'>;
 type EmployeeUpdate = Omit<Employee, 'createdAtIso' | 'updatedAtIso'>;
 
-const STORAGE_KEY = 'employeeCrud.employees.v1';
-
-function nowIso(): string {
-  return new Date().toISOString();
-}
-
-function newId(): string {
-  // Works in modern browsers; fallback for older ones.
-  // Tomcat does not generate IDs; this is a client-side app.
-  return (globalThis.crypto && 'randomUUID' in globalThis.crypto)
-    ? globalThis.crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function safeParseEmployees(raw: string | null): Employee[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(Boolean) as Employee[];
-  } catch {
-    return [];
-  }
-}
+const API_BASE = new URL('../api/employees', document.baseURI).toString();
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
-  private readonly employeesSubject = new BehaviorSubject<Employee[]>(this.loadInitial());
+  private readonly http = inject(HttpClient);
+
+  private readonly employeesSubject = new BehaviorSubject<Employee[]>([]);
   readonly employees$ = this.employeesSubject.asObservable();
+
+  constructor() {
+    void this.refresh();
+  }
 
   getSnapshot(): Employee[] {
     return this.employeesSubject.value;
@@ -43,88 +27,36 @@ export class EmployeeService {
     return this.getSnapshot().find((e) => e.id === id);
   }
 
-  create(input: EmployeeCreate): Employee {
-    const timestamp = nowIso();
-    const employee: Employee = {
-      ...input,
-      id: newId(),
-      createdAtIso: timestamp,
-      updatedAtIso: timestamp
-    };
-
-    const next = [employee, ...this.getSnapshot()];
-    this.persist(next);
-    return employee;
+  async create(input: EmployeeCreate): Promise<Employee> {
+    const created = await firstValueFrom(this.http.post<Employee>(API_BASE, input));
+    await this.refresh();
+    return created;
   }
 
-  update(input: EmployeeUpdate): Employee {
-    const existing = this.getById(input.id);
-    if (!existing) {
-      throw new Error('Employee not found');
-    }
-
-    const updated: Employee = {
-      ...existing,
-      ...input,
-      updatedAtIso: nowIso()
+  async update(input: EmployeeUpdate): Promise<Employee> {
+    const id = input.id;
+    const body = {
+      name: input.name,
+      email: input.email,
+      department: input.department,
+      salary: input.salary,
+      active: input.active,
     };
-
-    const next = this.getSnapshot().map((e) => (e.id === input.id ? updated : e));
-    this.persist(next);
+    const updated = await firstValueFrom(
+      this.http.put<Employee>(`${API_BASE}/${encodeURIComponent(id)}`, body)
+    );
+    await this.refresh();
     return updated;
   }
 
-  remove(id: string): void {
-    const next = this.getSnapshot().filter((e) => e.id !== id);
-    this.persist(next);
+  async remove(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete(`${API_BASE}/${encodeURIComponent(id)}`));
+    await this.refresh();
   }
 
-  private persist(next: Employee[]): void {
-    this.employeesSubject.next(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  }
-
-  private loadInitial(): Employee[] {
-    const stored = safeParseEmployees(localStorage.getItem(STORAGE_KEY));
-    if (stored.length > 0) return stored;
-
-    // Seed data (first run)
-    const timestamp = nowIso();
-    const seed: Employee[] = [
-      {
-        id: newId(),
-        name: 'Employee 1',
-        email: 'employee1@example.invalid',
-        department: 'Engineering',
-        salary: 95000,
-        active: true,
-        createdAtIso: timestamp,
-        updatedAtIso: timestamp
-      },
-      {
-        id: newId(),
-        name: 'Employee 2',
-        email: 'employee2@example.invalid',
-        department: 'Operations',
-        salary: 78000,
-        active: true,
-        createdAtIso: timestamp,
-        updatedAtIso: timestamp
-      },
-      {
-        id: newId(),
-        name: 'Employee 3',
-        email: 'employee3@example.invalid',
-        department: 'Finance',
-        salary: 88000,
-        active: false,
-        createdAtIso: timestamp,
-        updatedAtIso: timestamp
-      }
-    ];
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
-    return seed;
+  async refresh(): Promise<void> {
+    const employees = await firstValueFrom(this.http.get<Employee[]>(API_BASE));
+    this.employeesSubject.next(employees);
   }
 }
 

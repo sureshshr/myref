@@ -140,3 +140,12 @@ The Angular source lives here:
 
 Tomcat only needs to serve static files and provide an `index.html` fallback for client-side routes.
 Node.js is only required to *compile/bundle* Angular source code into those static files.
+
+
+
+commands:
+cd /Users/sureshselvaraj/SourceCode/myref/tomcat-spa-sample/angular-employee-crud && npm run -s build
+cd /Users/sureshselvaraj/SourceCode/myref/tomcat-spa-sample && ./tools/deploy-angular-dist-webinf.sh
+./tools/mvn -U -DskipTests clean package
+./tools/stop-tomcat9-isolated.sh || true
+./tools/run-tomcat9-isolated.sh
