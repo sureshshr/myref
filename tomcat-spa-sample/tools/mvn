@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Minimal Maven runner that avoids requiring Maven to be pre-installed.
+# It downloads an Apache Maven distribution into .tools/ and reuses it.
+
+MAVEN_VERSION="3.9.9"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TOOLS_DIR="$ROOT_DIR/.tools"
+MAVEN_DIR="$TOOLS_DIR/apache-maven-$MAVEN_VERSION"
+MAVEN_BIN="$MAVEN_DIR/bin/mvn"
+
+if command -v mvn >/dev/null 2>&1; then
+  exec mvn "$@"
+fi
+
+mkdir -p "$TOOLS_DIR"
+
+if [[ ! -x "$MAVEN_BIN" ]]; then
+  ARCHIVE="$TOOLS_DIR/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+  URL="https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz"
+
+  echo "Maven not found; downloading Apache Maven $MAVEN_VERSION..." >&2
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$URL" -o "$ARCHIVE"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO "$ARCHIVE" "$URL"
+  else
+    echo "Neither curl nor wget found; cannot download Maven." >&2
+    exit 1
+  fi
+
+  echo "Extracting..." >&2
+  tar -xzf "$ARCHIVE" -C "$TOOLS_DIR"
+fi
+
+exec "$MAVEN_BIN" "$@"
+
+
