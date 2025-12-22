@@ -1,12 +1,15 @@
-# Tomcat 9 + Angular SPA Sample (no Node.js on server)
+# Tomcat 9 / WebSphere tWAS 9 + Angular SPA Sample (no Node.js on server)
 
-This project demonstrates the standard pattern for hosting an Angular (or any SPA) on **Tomcat 9**:
+This project demonstrates the standard pattern for hosting an Angular (or any SPA) on a Java servlet container:
 
 - Node.js is used only to **build** Angular on your laptop/CI.
 - Tomcat serves only the **built static files** (HTML/CSS/JS).
 - Deep links (client-side routes) work because the server returns the SPA entry (`index.html`).
 
-This repo includes a real Angular app (`angular-employee-crud`) and a Tomcat WAR (`tomcat-spa-sample`).
+This repo includes a real Angular app (`angular-employee-crud`) and a WAR (`tomcat-spa-sample`) that can be built for:
+
+- Tomcat 9.x (bundles Jersey for JAX-RS)
+- WebSphere traditional (tWAS) 9.0.5.x (uses container-provided JAX-RS; does not bundle Jersey)
 
 ## Software requirements
 
@@ -24,6 +27,19 @@ This repo includes a real Angular app (`angular-employee-crud`) and a Tomcat WAR
 
 > This WAR is configured for Tomcat 9 (`javax.servlet`).
 > If you want Tomcat 10.1+ instead, the code/dependencies must use `jakarta.servlet`.
+
+## Build targets (Tomcat vs tWAS)
+
+This repo produces two WARs via Maven profiles:
+
+- **Tomcat WAR (default)**: bundles Jersey and wires JAX-RS in `web.xml`.
+- **Stable WAR name**: `target/tomcat-spa-sample.war` (keeps the Tomcat context path as `/tomcat-spa-sample`)
+	- Also copied to: `target/tomcat-spa-sample-tomcat.war`
+- **tWAS WAR**: does not bundle Jersey; relies on container JAX-RS activated by `@ApplicationPath("/api-jaxrs")`.
+	- Built as: `target/tomcat-spa-sample.war`
+	- Also copied to: `target/tomcat-spa-sample-twas.war`
+
+If you deploy the Tomcat WAR to tWAS, you may hit JAX-RS provider/classloader conflicts (because tWAS already provides JAX-RS).
 
 ## End-to-end: build Angular → package WAR → deploy to Tomcat 9
 
@@ -85,6 +101,19 @@ mvn clean package
 WAR output:
 
 - `target/tomcat-spa-sample.war`
+- `target/tomcat-spa-sample-tomcat.war`
+
+To build the **tWAS** variant instead:
+
+```bash
+cd tomcat-spa-sample
+mvn -Ptwas clean package
+```
+
+tWAS WAR output:
+
+- `target/tomcat-spa-sample.war`
+- `target/tomcat-spa-sample-twas.war`
 
 ### 4) Deploy to Tomcat 9
 
@@ -97,7 +126,7 @@ rm -rf "$CATALINA_HOME/webapps/tomcat-spa-sample" \
 	"$CATALINA_HOME/webapps/tomcat-spa-sample.war"
 
 # Deploy new WAR
-cp target/tomcat-spa-sample.war "$CATALINA_HOME/webapps/"
+cp target/tomcat-spa-sample-tomcat.war "$CATALINA_HOME/webapps/tomcat-spa-sample.war"
 
 # Start Tomcat
 "$CATALINA_HOME/bin/catalina.sh" start
@@ -113,6 +142,19 @@ Deep links should also work:
 
 - `http://localhost:8080/tomcat-spa-sample/app/employees`
 - `http://localhost:8080/tomcat-spa-sample/app/summary`
+
+API endpoints (same on Tomcat and tWAS):
+
+- Employees (servlet JSON API): `/api/employees`
+- Students (JAX-RS API): `/api-jaxrs/students`
+
+## Deploy to WebSphere tWAS 9.0.5.x
+
+- Build the tWAS WAR: `mvn -Ptwas clean package`
+- Deploy: `target/tomcat-spa-sample-twas.war`
+- Ensure your Angular `base-href` matches your configured context root + `/app/`.
+
+Note on persistence: the embedded H2 database is stored under `${catalina.base}/h2/` when `catalina.base` is present; otherwise it uses `${java.io.tmpdir}/tomcat-spa-sample/h2/`.
 
 ### Angular app source
 

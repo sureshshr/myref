@@ -11,7 +11,8 @@ HTTP_PORT="${TOMCAT_HTTP_PORT:-9080}"
 SHUTDOWN_PORT="${TOMCAT_SHUTDOWN_PORT:-9005}"
 AJP_PORT="${TOMCAT_AJP_PORT:-9009}"
 
-WAR="$ROOT_DIR/target/tomcat-spa-sample.war"
+WAR="${WAR_PATH:-$ROOT_DIR/target/tomcat-spa-sample.war}"
+CONTEXT_PATH="/$(basename "$WAR" .war)"
 
 if [[ ! -f "$WAR" ]]; then
   echo "ERROR: WAR not found: $WAR" >&2
@@ -37,7 +38,7 @@ export CATALINA_BASE="$BASE"
 echo "Started isolated Tomcat 9" >&2
 echo "  CATALINA_HOME=$CATALINA_HOME" >&2
 echo "  CATALINA_BASE=$CATALINA_BASE" >&2
-echo "  URL: http://localhost:$HTTP_PORT/tomcat-spa-sample/app/" >&2
+echo "  URL: http://localhost:$HTTP_PORT$CONTEXT_PATH/app/" >&2
 echo "  Logs: $CATALINA_BASE/logs/catalina.out" >&2
 echo "To stop:" >&2
 echo "  $ROOT_DIR/tools/stop-tomcat9-isolated.sh" >&2

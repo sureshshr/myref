@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+  <display-name>tomcat-spa-sample</display-name>
+
+  <servlet>
+    <servlet-name>webInfSpaServlet</servlet-name>
+    <servlet-class>com.example.spa.WebInfSpaServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>webInfSpaServlet</servlet-name>
+    <url-pattern>/app/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>employeeApiServlet</servlet-name>
+    <servlet-class>com.example.spa.api.EmployeeApiServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>employeeApiServlet</servlet-name>
+    <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
+
+  <!--
+    tWAS 9.0.5.x typically provides JAX-RS itself.
+    JAX-RS resources are activated via com.example.spa.jaxrs.RestApplication (@ApplicationPath("/api-jaxrs")).
+    We intentionally do NOT register Jersey's ServletContainer here to avoid provider/classloader conflicts.
+  -->
+
+  <filter>
+    <filter-name>spaFallbackFilter</filter-name>
+    <filter-class>com.example.spa.SpaFallbackFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>spaFallbackFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+
+</web-app>
