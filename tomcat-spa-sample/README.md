@@ -6,7 +6,7 @@ This project demonstrates the standard pattern for hosting an Angular (or any SP
 - Tomcat serves only the **built static files** (HTML/CSS/JS).
 - Deep links (client-side routes) work because the server returns the SPA entry (`index.html`).
 
-This repo includes a real Angular app (`angular-employee-crud`) and a WAR (`tomcat-spa-sample`) that can be built for:
+This repo includes a real Angular app (`angular-web`) and a WAR (`tomcat-spa-sample`) that can be built for:
 
 - Tomcat 9.x (bundles Jersey for JAX-RS)
 - WebSphere traditional (tWAS) 9.0.5.x (uses container-provided JAX-RS; does not bundle Jersey)
@@ -60,7 +60,7 @@ Verify:
 ### 1) Build the Angular app
 
 ```bash
-cd tomcat-spa-sample/angular-employee-crud
+cd tomcat-spa-sample/angular-web
 npm install
 
 # Build for a Tomcat context path + servlet mapping (/tomcat-spa-sample/app/)
@@ -69,7 +69,7 @@ npx ng build --configuration production --base-href /tomcat-spa-sample/app/
 
 Angular output folder:
 
-- `angular-employee-crud/dist/angular-employee-crud/browser/`
+- `angular-web/dist/angular-web/browser/`
 
 ### 2) Copy the Angular build into the WAR (under WEB-INF)
 
@@ -86,7 +86,7 @@ cd tomcat-spa-sample
 
 Manual copy (equivalent):
 
-- From: `angular-employee-crud/dist/angular-employee-crud/browser/`
+- From: `angular-web/dist/angular-web/browser/`
 - To: `src/main/webapp/WEB-INF/app/`
 
 Note: `src/main/webapp/WEB-INF/app/` is **generated output**. In a source-only checkout it will be empty (kept via a `.gitkeep`), and the deploy script will populate it.
@@ -160,7 +160,7 @@ Note on persistence: the embedded H2 database is stored under `${catalina.base}/
 
 The Angular source lives here:
 
-- [angular-employee-crud/README.md](angular-employee-crud/README.md)
+- [angular-web/README.md](angular-web/README.md)
 
 ## Troubleshooting
 
@@ -186,7 +186,7 @@ Node.js is only required to *compile/bundle* Angular source code into those stat
 
 
 commands:
-cd /Users/sureshselvaraj/SourceCode/myref/tomcat-spa-sample/angular-employee-crud && npm run -s build
+cd /Users/sureshselvaraj/SourceCode/myref/tomcat-spa-sample/angular-web && npm run -s build
 cd /Users/sureshselvaraj/SourceCode/myref/tomcat-spa-sample && ./tools/deploy-angular-dist-webinf.sh
 ./tools/mvn -U -DskipTests clean package
 ./tools/stop-tomcat9-isolated.sh || true

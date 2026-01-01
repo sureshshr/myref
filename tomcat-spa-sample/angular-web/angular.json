@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "angular-employee-crud": {
+    "angular-web": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/angular-employee-crud",
+            "outputPath": "dist/angular-web",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -53,14 +53,14 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "buildTarget": "angular-employee-crud:build:development"
+            "buildTarget": "angular-web:build:development"
           },
           "configurations": {
             "development": {
-              "buildTarget": "angular-employee-crud:build:development"
+              "buildTarget": "angular-web:build:development"
             },
             "production": {
-              "buildTarget": "angular-employee-crud:build:production"
+              "buildTarget": "angular-web:build:production"
             }
           },
           "defaultConfiguration": "development"

@@ -15,7 +15,7 @@ Data is stored in `localStorage` (so it works as a pure static SPA).
 On your dev machine (Node.js required locally):
 
 ```bash
-cd angular-employee-crud
+cd angular-web
 npm ci
 npm start
 ```
@@ -25,21 +25,21 @@ npm start
 For Tomcat deployments, **use a relative base href** so bundles load under any context path:
 
 ```bash
-cd angular-employee-crud
+cd angular-web
 npm ci
 npx ng build --configuration production --base-href ./
 ```
 
 Output folder:
 
-- `angular-employee-crud/dist/angular-employee-crud/browser/`
+- `angular-web/dist/angular-web/browser/`
 
 ## Integrate into the Tomcat WAR (manual)
 
 Copy the build output into the Tomcat WAR web root:
 
 - Copy everything from:
-  - `angular-employee-crud/dist/angular-employee-crud/browser/`
+  - `angular-web/dist/angular-web/browser/`
 - Into:
   - `tomcat-spa-sample/src/main/webapp/`
 
