@@ -59,12 +59,6 @@ public class SpaFallbackFilter implements Filter {
 			return;
 		}
 
-		// JAX-RS (Jersey) API requests should never be rewritten either.
-		if (path.equals("/api-jaxrs") || path.startsWith("/api-jaxrs/")) {
-			chain.doFilter(request, response);
-			return;
-		}
-
 		// Let the default servlet serve real files and special endpoints.
 		if (path.equals("/")
 				|| path.equals("/index.html")

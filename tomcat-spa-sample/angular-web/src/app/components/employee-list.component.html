@@ -1,0 +1,120 @@
+<div>
+  <div style="display:flex; justify-content: space-between; align-items:center; gap:12px;">
+    <div>
+      <h2 style="margin:0;">Employees</h2>
+      <div class="muted">Create, edit, delete employees (stored in H2 database).</div>
+    </div>
+    <button type="button" (click)="create()">+ New</button>
+  </div>
+
+  <div *ngIf="(vm$ | async) as vm" style="margin-top: 14px;">
+    <div class="muted" style="margin-bottom: 10px;">Total: {{ vm.total }}</div>
+
+    <form [formGroup]="filters">
+      <div class="table-scroll" *ngIf="vm.total > 0; else empty">
+        <table class="table smart-table">
+          <thead>
+            <tr class="header-row">
+              <th class="actions-col">Actions</th>
+              <th class="id-col">
+                <button type="button" class="sort-link" (click)="sortBy('id')">ID{{ sortLabel('id') }}</button>
+              </th>
+              <th class="name-col">
+                <button type="button" class="sort-link" (click)="sortBy('name')">Name{{ sortLabel('name') }}</button>
+              </th>
+              <th class="email-col">
+                <button type="button" class="sort-link" (click)="sortBy('email')">E-mail{{ sortLabel('email') }}</button>
+              </th>
+              <th class="dept-col">
+                <button type="button" class="sort-link" (click)="sortBy('department')">Department{{ sortLabel('department') }}</button>
+              </th>
+              <th class="salary-col">
+                <button type="button" class="sort-link" (click)="sortBy('salary')">Salary{{ sortLabel('salary') }}</button>
+              </th>
+              <th class="status-col">
+                <button type="button" class="sort-link" (click)="sortBy('active')">Status{{ sortLabel('active') }}</button>
+              </th>
+              <th class="updated-col">
+                <button type="button" class="sort-link" (click)="sortBy('updatedAtIso')">Updated{{ sortLabel('updatedAtIso') }}</button>
+              </th>
+            </tr>
+
+            <tr class="filter-row">
+              <th class="actions-col">
+                <button type="button" class="add-btn" (click)="create()" aria-label="Add employee">+</button>
+              </th>
+              <th class="id-col">
+                <input formControlName="id" placeholder="ID" aria-label="Filter by ID" />
+              </th>
+              <th class="name-col">
+                <input formControlName="name" placeholder="Name" aria-label="Filter by name" />
+              </th>
+              <th class="email-col">
+                <input formControlName="email" placeholder="E-mail" aria-label="Filter by email" />
+              </th>
+              <th class="dept-col">
+                <select formControlName="department" aria-label="Filter by department">
+                  <option value="">Any</option>
+                  <option *ngFor="let d of departmentOptions" [value]="d">{{ d }}</option>
+                </select>
+              </th>
+              <th class="salary-col">
+                <select [formControl]="filters.controls.pageSize" aria-label="Rows per page">
+                  <option [ngValue]="5">5</option>
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="25">25</option>
+                </select>
+              </th>
+              <th class="status-col">
+                <select formControlName="active" aria-label="Filter by status">
+                  <option value="">Any</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </th>
+              <th class="updated-col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of vm.pageEmployees">
+              <td class="actions-col">
+                <div class="action-icons">
+                  <button type="button" class="icon-btn" (click)="edit(e.id)" aria-label="Edit">✎</button>
+                  <button type="button" class="icon-btn" (click)="remove(e.id, e.name)" aria-label="Delete">🗑</button>
+                </div>
+              </td>
+              <td class="id-col">{{ e.id }}</td>
+              <td class="name-col">{{ e.name }}</td>
+              <td class="email-col">{{ e.email }}</td>
+              <td class="dept-col">{{ e.department }}</td>
+              <td class="salary-col">{{ e.salary | currency }}</td>
+              <td class="status-col">{{ e.active ? 'Active' : 'Inactive' }}</td>
+              <td class="updated-col">{{ e.updatedAtIso | date:'medium' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </form>
+
+    <div *ngIf="vm.total > 0" class="pagination">
+      <button type="button" (click)="goToPage(0)" [disabled]="vm.pageIndex === 0" aria-label="First page">«</button>
+      <button type="button" (click)="prevPage()" [disabled]="vm.pageIndex === 0" aria-label="Previous page">‹</button>
+
+      <button
+        type="button"
+        *ngFor="let p of vm.pages"
+        (click)="goToPage(p)"
+        [class.active]="p === vm.pageIndex"
+        aria-label="Page {{ p + 1 }}">
+        {{ p + 1 }}
+      </button>
+
+      <button type="button" (click)="nextPage()" [disabled]="vm.pageIndex + 1 >= vm.pageCount" aria-label="Next page">›</button>
+      <button type="button" (click)="goToPage(vm.pageCount - 1)" [disabled]="vm.pageIndex + 1 >= vm.pageCount" aria-label="Last page">»</button>
+    </div>
+
+    <ng-template #empty>
+      <p class="muted">No employees yet. Click <strong>New</strong>.</p>
+    </ng-template>
+  </div>
+</div>

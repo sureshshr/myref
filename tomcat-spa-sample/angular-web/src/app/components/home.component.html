@@ -1,0 +1,16 @@
+<div>
+  <h2 style="margin: 0;">Home</h2>
+  <div class="muted" style="margin-top: 6px;">Apps available: {{ apps.length }}</div>
+
+  <div style="margin-top: 14px; display: grid; gap: 10px;">
+    <a
+      *ngFor="let app of apps"
+      class="home-app"
+      (click)="selectApp(app.appId)"
+      [routerLink]="app.route"
+      aria-label="Open {{ app.title }}">
+      <div style="font-weight: 650;">{{ app.title }}</div>
+      <div class="muted" style="margin-top: 2px;">{{ app.description }}</div>
+    </a>
+  </div>
+</div>

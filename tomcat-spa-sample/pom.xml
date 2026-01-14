@@ -42,13 +42,6 @@
       <version>2.18.2</version>
     </dependency>
 
-    <!-- JAX-RS API (provided by the container on tWAS; Jersey provides it transitively on Tomcat) -->
-    <dependency>
-      <groupId>javax.ws.rs</groupId>
-      <artifactId>javax.ws.rs-api</artifactId>
-      <version>2.1.1</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -74,7 +67,7 @@
   </build>
 
   <profiles>
-    <!-- Default: Tomcat (bundle Jersey + use web.xml mapping to /api-jaxrs/*) -->
+    <!-- Default: Tomcat -->
     <profile>
       <id>tomcat</id>
       <activation>
@@ -106,26 +99,9 @@
           </plugin>
         </plugins>
       </build>
-      <dependencies>
-        <dependency>
-          <groupId>org.glassfish.jersey.containers</groupId>
-          <artifactId>jersey-container-servlet</artifactId>
-          <version>2.41</version>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.inject</groupId>
-          <artifactId>jersey-hk2</artifactId>
-          <version>2.41</version>
-        </dependency>
-        <dependency>
-          <groupId>org.glassfish.jersey.media</groupId>
-          <artifactId>jersey-media-json-jackson</artifactId>
-          <version>2.41</version>
-        </dependency>
-      </dependencies>
     </profile>
 
-    <!-- tWAS: rely on container-provided JAX-RS; do not bundle Jersey; use alternate web.xml without Jersey servlet mapping -->
+    <!-- tWAS: use alternate web.xml -->
     <profile>
       <id>twas</id>
       <build>

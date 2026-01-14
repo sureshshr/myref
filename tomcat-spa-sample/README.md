@@ -185,9 +185,6 @@ Node.js is only required to *compile/bundle* Angular source code into those stat
 
 
 
-commands:
-cd /Users/sureshselvaraj/SourceCode/myref/tomcat-spa-sample/angular-web && npm run -s build
-cd /Users/sureshselvaraj/SourceCode/myref/tomcat-spa-sample && ./tools/deploy-angular-dist-webinf.sh
-./tools/mvn -U -DskipTests clean package
-./tools/stop-tomcat9-isolated.sh || true
-./tools/run-tomcat9-isolated.sh
+commands: clean build and deploy
+
+npm -C angular-web run build && ./tools/deploy-angular-dist-webinf.sh && ./tools/mvn -U -DskipTests clean package && ./tools/run-tomcat9-isolated.sh && sleep 2 && curl -fsS -o /dev/null -w '%{http_code} %{url_effective}\n' http://localhost:9080/tomcat-spa-sample/app/employees

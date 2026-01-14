@@ -24,12 +24,6 @@
     <url-pattern>/api/*</url-pattern>
   </servlet-mapping>
 
-  <!--
-    tWAS 9.0.5.x typically provides JAX-RS itself.
-    JAX-RS resources are activated via com.example.spa.jaxrs.RestApplication (@ApplicationPath("/api-jaxrs")).
-    We intentionally do NOT register Jersey's ServletContainer here to avoid provider/classloader conflicts.
-  -->
-
   <filter>
     <filter-name>spaFallbackFilter</filter-name>
     <filter-class>com.example.spa.SpaFallbackFilter</filter-class>
